@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>测测你是守望先锋里的谁</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #f5f5f7; color: #1a1a1a; margin: 0; padding: 32px 16px; }
+  button { font: inherit; }
+  .btn { display: inline-block; border: 1px solid #d0d0d5; background: #fff; color: #1a1a1a; border-radius: 8px; padding: 8px 16px; min-height: 28px; cursor: pointer; }
+  .btn:hover { border-color: #b0b0b8; }
+  .btn-primary { background: #f99e1a; border-color: #f99e1a; color: #fff; font-weight: 500; }
+  .btn-primary:hover { background: #e8930f; border-color: #e8930f; }
+  .btn-lg { padding: 12px 32px; font-size: 17px; }
+  .btn-block { display: block; width: 100%; margin-bottom: 8px; }
+  .text-muted { color: #6e6e78; }
+  .text-small { font-size: 13px; }
+  .card { background: #fff; border: 1px solid #e5e5ea; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .viz-badge { display: inline-block; background: #faf0dc; color: #9a6a10; border-radius: 999px; padding: 3px 12px; font-size: 13px; }
+  .progress { background: #e9e9ee; border-radius: 999px; height: 8px; overflow: hidden; }
+  .progress-bar { background: #f99e1a; height: 100%; border-radius: 999px; transition: width .25s; }
+  hr { border: 0; border-top: 1px solid #e5e5ea; margin: 16px 0; }
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div id="ow-quiz" style="max-width:680px;margin:0 auto;">
+  <style>
+    #ow-quiz .ow-opt { text-align: left; justify-content: flex-start; margin-bottom: 8px; }
+    #ow-quiz .ow-hero-name { font-size: 1.5em; font-weight: 500; }
+    #ow-quiz .ow-quote { font-style: italic; color: var(--muted-foreground, #6e6e78); margin: 8px 0 12px; }
+    #ow-quiz .ow-desc { line-height: 1.7; }
+    #ow-quiz .ow-roster { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin: 16px 0 20px; }
+    #ow-quiz .ow-face { position: relative; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; background: var(--muted, #e9e9ee); border-radius: 8px; width: 40px; height: 40px; font-size: 20px; flex: none; }
+    #ow-quiz .ow-face img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    #ow-quiz .ow-face.ow-portrait { width: 96px; height: 96px; border-radius: 16px; font-size: 48px; margin: 8px auto; }
+    #ow-quiz .ow-face.ow-sm { width: 32px; height: 32px; border-radius: 6px; font-size: 16px; }
+    #ow-quiz .ow-ult-label { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px; }
+    #ow-quiz .ow-victory { text-align: center; letter-spacing: 6px; font-weight: 500; color: var(--primary, #f99e1a); margin-bottom: 12px; }
+    #ow-quiz .ow-matches { margin: 12px auto 0; max-width: 360px; text-align: left; }
+    #ow-quiz .ow-matches .ow-match { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+    #ow-quiz .ow-match .ow-fit { margin-left: auto; color: var(--muted-foreground, #6e6e78); }
+    #ow-quiz .ow-profile { text-align: center; margin: 4px 0 0; }
+  </style>
+
+  <!-- 开始页 -->
+  <div id="ow-start" style="text-align:center;padding:24px 0;">
+    <h2>测测你是守望先锋里的谁？</h2>
+    <p class="text-muted" style="margin:8px 0 4px;">「这个世界需要更多英雄。」</p>
+    <p class="text-muted" style="margin:0 0 4px;">基于每位英雄在官方剧情中的性格，我们从 8 个维度<br>（守护·独行 / 热血·冷静 / 张扬·内敛 / 守序·随性 / 助人·自强 /<br>幽默·严肃 / 好胜·佛系 / 科技·直觉）<br>将你与全部 <strong>54 位英雄</strong> 逐一比对，找出人格最接近的那一位。</p>
+    <div class="ow-roster" id="ow-roster" aria-label="全部候选英雄"></div>
+    <button type="button" class="btn btn-primary btn-lg" id="ow-begin">选择你的英雄</button>
+  </div>
+
+  <!-- 答题页 -->
+  <div id="ow-quiz-page" hidden>
+    <div class="ow-ult-label">
+      <span class="text-muted" id="ow-progress-label">目标 1 / 30</span>
+      <span class="text-muted tabular-nums" id="ow-charge">大招充能 0%</span>
+    </div>
+    <div class="progress" role="progressbar" aria-label="大招充能进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="margin:8px 0 20px;">
+      <div class="progress-bar" id="ow-progress-bar" style="width:0%"></div>
+    </div>
+    <h3 id="ow-question" style="margin-bottom:16px;"></h3>
+    <div id="ow-options" aria-live="polite"></div>
+    <div style="margin-top:8px;"><button type="button" class="btn" id="ow-back" hidden>← 返回上一题</button></div>
+    <hr>
+    <p class="text-muted text-small" id="ow-tip" style="margin:0;"></p>
+  </div>
+
+  <!-- 结果页 -->
+  <div id="ow-result" hidden aria-live="polite">
+    <div class="ow-victory">胜利 · VICTORY</div>
+    <div class="card" style="text-align:center;">
+      <span class="text-muted text-small">全场最佳 · PLAY OF THE MATCH</span>
+      <span class="ow-face ow-portrait"><span id="ow-r-emoji"></span><img id="ow-r-portrait" alt=""></span>
+      <div class="ow-hero-name" id="ow-r-name"></div>
+      <div style="margin-top:8px;"><span class="viz-badge" id="ow-r-role"></span></div>
+      <p class="ow-quote" id="ow-r-quote"></p>
+      <p class="ow-desc text-small" id="ow-r-desc"></p>
+    </div>
+    <p class="ow-profile text-small" id="ow-r-profile" aria-live="polite"></p>
+    <p class="text-muted text-small" style="text-align:center;margin:16px 0 4px;">其他相近的英雄</p>
+    <div class="ow-matches" id="ow-matches"></div>
+    <p class="text-muted text-small" id="ow-r-tip" style="text-align:center;margin:12px 0 16px;"></p>
+    <div style="text-align:center;">
+      <button type="button" class="btn" id="ow-back-result">← 返回修改</button>
+      <button type="button" class="btn" id="ow-retry">再来一局</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var root = document.getElementById('ow-quiz');
+  var MIRRORS = [
+    'https://cdn.jsdelivr.net/gh/hk0i/counters.to@master/packages/counters-web/static/images/heroes/',
+    'https://fastly.jsdelivr.net/gh/hk0i/counters.to@master/packages/counters-web/static/images/heroes/',
+    'https://gcore.jsdelivr.net/gh/hk0i/counters.to@master/packages/counters-web/static/images/heroes/'
+  ];
+
+  var heroes = {
+    dva:            { name: 'D.Va', role: '坦克 · 王牌机师', emoji: '🎮', vec: [0, 1, 2, 0, 0, 2, 2, 1], quote: '这才叫专业玩家！', desc: '你自信张扬、好胜心强，把一切都当成值得赢下的比赛。享受舞台和掌声，也有拿得出手的实力。' },
+    dmon:           { name: 'D.Mon', role: '坦克 · MEKA狙击手', emoji: '🎯', img: null, vec: [1, -1, -1, 1, 1, -1, 1, 1], quote: '锁定，就是我的语言。', desc: '你沉稳专注、精准可靠，话不多但每一次出手都经过计算。' },
+    domina:         { name: 'Domina', role: '坦克 · 铁腕统治', emoji: '⚔️', vec: [0, 1, 2, -1, -1, -1, 2, 0], quote: '跪下，或者让开。', desc: '你气场慑人、控制欲强，天生就是发号施令的人，但强者也有守护柔软的一面。' },
+    doomfist:       { name: '末日铁拳', role: '坦克 · 强权拳王', emoji: '👊', vec: [-1, -1, 1, -1, -2, -1, 2, 0], quote: '只有强者，才能定义未来。', desc: '你相信力量与进取，敢于All-in。你从不等待机会，而是亲手打出来。' },
+    hazard:         { name: '哈泽德', role: '坦克 · 岩浆突袭', emoji: '🌋', vec: [-1, 2, 1, -2, 0, 2, 1, -1], quote: '没有什么能挡得住我。', desc: '你横冲直撞、无所畏惧，困难在你眼里只是待撞碎的墙。' },
+    'junker-queen': { name: '渣客女王', role: '坦克 · 废土女王', emoji: '👑', vec: [0, 2, 2, -2, 1, 2, 2, -2], quote: '女王驾到，都让开！', desc: '你天生自带气场，糙汉子的幽默配上女王级的统治力，混世却讲义气。' },
+    mauga:          { name: '毛加', role: '坦克 · 双枪狂人', emoji: '🔥', vec: [1, 2, 2, -1, 1, 2, 1, -1], quote: '火力全开，这才叫热闹！', desc: '你热爱热闹与力量，朋友越多越开心，胆子越大越尽兴。' },
+    orisa:          { name: '奥丽莎', role: '坦克 · 守护机器人', emoji: '🤖', vec: [2, -1, 0, 2, 2, 0, 0, 2], quote: '保护协议，正在执行。', desc: '你认真尽责、忠诚可靠，守护在意的人是你最核心的运行程序。' },
+    ramattra:       { name: '拉玛刹', role: '坦克 · 觉醒智械', emoji: '⚙️', vec: [1, -1, 0, 1, 0, -1, 0, 1], quote: '为了和平，我不惜一战。', desc: '你深思熟虑、信念坚定，为了理想可以收起温柔、切换成战斗形态。' },
+    reinhardt:      { name: '莱因哈特', role: '坦克 · 荣誉骑士', emoji: '🛡️', vec: [2, 1, 1, 1, 1, 1, 1, -2], quote: '荣誉！正义！German engineering！', desc: '你是天生的守护者，热血正直、荣誉感爆棚，朋友遇到麻烦时永远是第一个举盾冲上去的人。' },
+    roadhog:        { name: '路霸', role: '坦克 · 废土屠夫', emoji: '🪝', vec: [-1, 0, -1, -2, 0, 0, -1, -1], quote: '哼……别挡道。', desc: '你话不多、块头大，看似凶悍实则随性，用最简单直接的方式解决问题。' },
+    sigma:          { name: '西格玛', role: '坦克 · 引力学者', emoji: '🌌', vec: [-1, -1, -1, -1, 0, -1, 0, 2], quote: '引力，尽在掌握。', desc: '你沉醉于自己的精神世界，思维飘逸在常人之上，天才与疯子只隔一道旋律。' },
+    winston:        { name: '温斯顿', role: '坦克 · 天才猩猩', emoji: '🔬', vec: [2, -1, -1, 1, 1, 1, 0, 2], quote: '我是科学家……但必要时，也不怕战斗。', desc: '你理性聪明又温和克制，平时是学者，关键时刻却敢为保护所有人挺身而出。' },
+    'wrecking-ball':{ name: '破坏球', role: '坦克 · 仓鼠驾驶员', emoji: '🐹', vec: [-1, 0, 0, -2, 0, 2, 0, 1], quote: '吱吱！（翻译：滚球时间到）', desc: '你脑洞清奇、自成一派，看起来不靠谱，实际上把一切都安排得明明白白。' },
+    zarya:          { name: '查莉娅', role: '坦克 · 力量举冠军', emoji: '💪', vec: [2, 1, 1, 1, 1, 1, 2, -1], quote: '力量，要用在对的地方。', desc: '你体格与意志一样强大，乐观爽朗，能吃苦也能扛事，是队友身后的坚实后盾。' },
+    anran:          { name: '安然', role: '输出 · 神秘侠客', emoji: '🧧', vec: [0, -1, -1, 0, 0, -1, 0, 0], quote: '静如止水，动如雷霆。', desc: '你外冷内热、行事利落，藏着故事的人往往最有味道。' },
+    ashe:           { name: '艾什', role: '输出 · 歹徒首领', emoji: '🤠', vec: [0, 0, 1, -1, -1, 0, 1, -1], quote: '鲍勃，给我上！', desc: '你目标明确、手腕果断，自己就是队伍的排面，还有一群死心塌地的伙伴。' },
+    bastion:        { name: '堡垒', role: '输出 · 战争机器人', emoji: '🦾', vec: [0, 0, -2, 0, 1, -1, 0, 1], quote: '嘀——哔哔！', desc: '你外表安静、内心强大，专注起来进入心流模式，无人可挡。' },
+    cassidy:        { name: '卡西迪', role: '输出 · 赏金牛仔', emoji: '🃏', vec: [1, 0, 0, 1, 0, 1, 0, -1], quote: '午时已到。', desc: '你从容不迫、出手果断，带着一点浪子气质，关键时刻从不掉链子。' },
+    echo:           { name: '回声', role: '输出 · 自适应机械', emoji: '✨', vec: [1, -1, 0, 1, 1, 0, 0, 2], quote: '自适应完毕。', desc: '你学习力惊人、适应力超强，放在哪个位置都能快速成长为最需要的样子。' },
+    emre:           { name: '埃姆雷', role: '输出 · 精密工程师', emoji: '📐', vec: [0, -2, -1, 2, 0, -1, 0, 2], quote: '误差？不存在的。', desc: '你逻辑严密、注重精度，把每个细节都安排得明明白白。' },
+    freja:          { name: '弗蕾娅', role: '输出 · 赏金猎人', emoji: '🏹', vec: [-1, -1, 0, 0, -1, 0, 1, 0], quote: '目标锁定，一击命中。', desc: '你独立精干、嗅觉敏锐，越是有挑战的目标越能激起你的兴致。' },
+    genji:          { name: '源氏', role: '输出 · 忍者剑客', emoji: '🐉', vec: [-1, -1, -1, 0, -1, -1, 2, 0], quote: '我的刀已饥渴难耐。', desc: '你冷静自律、追求精进，外表淡然内心炽热，真正的高手从不炫耀锋芒。' },
+    hanzo:          { name: '半藏', role: '输出 · 弓术大师', emoji: '🏯', vec: [-1, -1, -1, 1, 0, -1, 2, -1], quote: '龙啊，吞噬我的敌人！', desc: '你背负着责任感与传统，沉默克制，每一步都走得郑重而精准。' },
+    junkrat:        { name: '狂鼠', role: '输出 · 爆破专家', emoji: '💣', vec: [-1, 2, 2, -2, -1, 2, 0, -2], quote: '炸弹才是解决一切问题的答案！', desc: '你的脑回路清奇到令人发指，享受混乱、制造惊喜，总能用别人想不到的方式办成事。' },
+    mei:            { name: '美', role: '输出 · 气象学家', emoji: '❄️', vec: [1, -1, 0, 1, 1, 1, 0, 1], quote: '抱歉！我不是故意的。', desc: '你温和软萌又韧性十足，认真起来既能冻结全场，也能温暖大家。' },
+    pharah:         { name: '法老之鹰', role: '输出 · 制空骑士', emoji: '🚀', vec: [2, 1, 0, 2, 1, -1, 1, 0], quote: '天降正义。', desc: '你纪律严明、正义感强，相信规则与担当，飞得越高越要守得住初心。' },
+    reaper:         { name: '死神', role: '输出 · 死亡使者', emoji: '💀', vec: [-2, -1, -1, -1, -2, -2, 0, -1], quote: '死亡，如影随形。', desc: '你独行、神秘、不走寻常路，不喜欢被安排，只用结果说话。' },
+    vendetta:       { name: '死怨', role: '输出 · 复仇使者', emoji: '🗡️', img: null, vec: [-2, -1, 0, 0, -2, -2, 1, 0], quote: '债，总要还的。', desc: '你目标感极强、记性也好，认定的事不达目的誓不罢休。' },
+    sierra:         { name: '塞拉', role: '输出 · 荒野浪人', emoji: '🏜️', vec: [-1, 0, 0, -1, -1, 0, 0, -1], quote: '风往哪吹，我往哪走。', desc: '你自由不羁、适应力强，环境再恶劣也拦不住你的脚步。' },
+    sojourn:        { name: '索杰恩', role: '输出 · 电能枪手', emoji: '⚡', vec: [1, -1, -1, 2, 1, -1, 1, 1], quote: '锁定目标，火力覆盖。', desc: '你是执行力天花板，干脆利落、训练有素，专业度让所有人放心。' },
+    'soldier-76':   { name: '士兵：76', role: '输出 · 沙场老兵', emoji: '🎖️', vec: [1, -1, -1, 2, 0, -2, 1, 0], quote: '战术目镜，启动。', desc: '你有强烈的责任感和领导力，务实、纪律、说到做到，你在队伍就不会散。' },
+    sombra:         { name: '黑影', role: '输出 · 黑客幽灵', emoji: '👻', vec: [-1, -1, 1, -1, -1, 2, 1, 2], quote: '一切尽在我掌握。（Boop!）', desc: '你信息灵通、心思缜密，喜欢神出鬼没地掌控全局，恶作剧里藏着真本事。' },
+    symmetra:       { name: '秩序之光', role: '输出 · 硬光建筑师', emoji: '🌀', vec: [0, -1, -1, 2, 0, -1, 0, 2], quote: '世界本应秩序井然。', desc: '你追求完美与秩序，审美在线，擅长把混乱的一切重新构建得井井有条。' },
+    torbjorn:       { name: '托比昂', role: '输出 · 工程大师', emoji: '🔧', vec: [1, 0, 0, 2, 1, 1, 0, 2], quote: '工具在我手上，就没有修不好的。', desc: '你是实干型匠人，动手能力拉满，坚信最好的成果都是亲手造出来的。' },
+    tracer:         { name: '猎空', role: '输出 · 时间跳跃者', emoji: '⏱️', vec: [1, 1, 2, 0, 1, 2, 1, -1], quote: '爱与正义，猎空来啦！', desc: '你是团队里的能量之源，乐观开朗、永不停歇，摔倒了也会笑着闪回重来。' },
+    venture:        { name: '破空', role: '输出 · 考古冒险家', emoji: '⛏️', vec: [-1, 1, 1, -1, 0, 2, 0, 1], quote: '钻就完了！', desc: '你好奇心爆棚、精力无限，别人眼里的麻烦，在你看来都是宝藏。' },
+    widowmaker:     { name: '黑百合', role: '输出 · 狙击杀手', emoji: '🕷️', vec: [-2, -1, -1, 0, -2, -2, 2, 0], quote: '一枪，一个。', desc: '你冷静优雅、追求极致，用最少的动作完成最致命的一击。' },
+    shion:          { name: 'Shion', role: '输出 · 白面艺者', emoji: '🌙', img: null, vec: [-1, -1, -1, 0, 0, -1, -1, -1], quote: '谢幕，从不预告。', desc: '你安静优雅、自带神秘气场，像一首没人猜得透的歌。' },
+    ana:            { name: '安娜', role: '支援 · 传奇狙击手', emoji: '💚', vec: [2, -1, -1, 1, 2, -1, 0, 0], quote: '孩子，妈妈永远看着你呢。', desc: '你沉稳可靠，总在默默照顾身边每一个人；不站聚光灯下，但关键时刻靠得住的是你。' },
+    baptiste:       { name: '巴蒂斯特', role: '支援 · 战地医生', emoji: '🧰', vec: [1, 0, 0, 0, 2, 1, 0, 1], quote: '有我在，今天没人会死。', desc: '你乐观务实、技术过硬，相信就算在最糟的境地里，也能把事情往好的方向扳。' },
+    brigitte:       { name: '布丽吉塔', role: '支援 · 骑士侍从', emoji: '🔨', vec: [2, 1, 0, 1, 2, 1, 1, -1], quote: '想越过我？先问问我的盾！', desc: '你忠诚勇敢、护人周全，别人冲上去时，你永远站在他们身后半步的位置。' },
+    doctrine:       { name: '血律', role: '支援 · 战地导师', emoji: '📜', img: null, vec: [1, -1, -1, 1, 2, -1, 0, 0], quote: '信念，是最好的护甲。', desc: '你有大智慧与大耐心，擅长用言行把散落的人凝聚成队伍。' },
+    illari:         { name: '伊拉里', role: '支援 · 太阳之子', emoji: '☀️', vec: [1, 0, -1, 1, 1, 0, 0, 0], quote: '太阳给了我力量。', desc: '你身上背负着期待，却始终努力发光发热，把温暖带给身边的人。' },
+    'jetpack-cat':  { name: '喷气飞猫', role: '支援 · 天降神猫', emoji: '🐱', vec: [1, 1, 1, -2, 1, 2, 0, -1], quote: '喵呜——（火箭推进音）', desc: '你随性可爱又出其不意，看起来在摸鱼，其实在关键时刻总能空降到最需要你的地方。' },
+    juno:           { name: '茱诺', role: '支援 · 火星驰援', emoji: '🛸', vec: [1, 0, 1, 0, 1, 2, 1, 1], quote: '轨道支援，就位！', desc: '你对世界充满新鲜感，热情积极，自带太空级的乐观精神与行动力。' },
+    kiriko:         { name: '雾子', role: '支援 · 巫女忍者', emoji: '🦊', vec: [1, 0, 1, -1, 2, 2, 1, 0], quote: '让我看看你的运气。', desc: '你古灵精怪又靠谱，胆大心细，既是团宠也是全队的守护神。' },
+    lifeweaver:     { name: '生命编织者', role: '支援 · 生灵画师', emoji: '🌸', vec: [1, 0, 0, 1, 2, 0, -1, -1], quote: '生命之美，值得温柔以待。', desc: '你温和细腻、审美高雅，相信善意与美能改变世界，也真的在做。' },
+    lucio:          { name: '卢西奥', role: '支援 · 音速DJ', emoji: '🎧', vec: [0, 1, 2, -1, 2, 2, 1, 0], quote: '把节奏带起来！', desc: '音乐、朋友、正能量是你的人生三件套，你就是团队里行走的BGM。' },
+    mercy:          { name: '天使', role: '支援 · 战地天使', emoji: '😇', vec: [2, 0, -1, 1, 2, 0, 0, 0], quote: '英雄们，永不消逝。', desc: '你温柔坚定、共情力强，把守护他人当成信仰，是所有人安心所在。' },
+    mizuki:         { name: '水希', role: '支援 · 水月巫女', emoji: '💧', vec: [1, 1, 1, -1, 2, 2, 0, 0], quote: '水能载舟，也能治愈你。', desc: '你灵动机敏、治愈力满点，擅长用温柔化解一切剑拔弩张。' },
+    moira:          { name: '莫伊拉', role: '支援 · 基因科学家', emoji: '🧪', vec: [-1, -2, -1, -1, -1, -1, 0, 2], quote: '为了科学，一切代价都值得。', desc: '你理智到近乎冷酷，好奇心驱动一切，不偏见、不设限，只相信探索。' },
+    wuyang:         { name: '无漾', role: '支援 · 水行武者', emoji: '🌊', vec: [0, -1, 0, 0, 0, 0, 0, -1], quote: '心如止水，招如流水。', desc: '你随形而变、收放自如，看似温和无害，实则内力深厚、难以捉摸。' },
+    zenyatta:       { name: '禅雅塔', role: '支援 · 智械僧侣', emoji: '🕊️', vec: [0, -1, -1, -1, 1, -1, -2, -1], quote: '心静如水，方能悟道。', desc: '你超然淡定、洞察人心，用最平和的方式点醒身边的人。' }
+  };
+
+  var tips = [
+    '小贴士：队伍配合永远大于个人英雄主义。',
+    '小贴士：听到「天降正义」记得找掩体。',
+    '小贴士：辅助不是奶妈，是团队的指挥官。',
+    '小贴士：狂鼠的夹子会等着你的，永远会。',
+    '小贴士：源氏反弹你的攻击时，别站在原地看。',
+    '小贴士：大招不用留着过年，但要看时机。',
+    '小贴士：D.Va 的机甲自爆前，总有几秒可以跑路。',
+    '小贴士：莱因哈特的冲锋会带走一切——包括他自己。',
+    '小贴士：身后有安娜的针，你才敢往前冲。',
+    '小贴士：半藏的箭和禅雅塔的话语一样，都会正中眉心。'
+  ];
+
+  var questions = [
+    { q: '周末你打算怎么过？', opts: [
+        { t: '约朋友出去玩，越热闹越好！', s: { C: 2, B: 1, F: 1 } },
+        { t: '独自训练/健身，精进自己', s: { E: -2, B: -1, G: 1 } },
+        { t: '和家人朋友聚聚，照顾好大家', s: { A: 2, E: 1 } },
+        { t: '想到啥干啥，随性发挥', s: { D: -2, F: 1 } } ] },
+    { q: '在团队项目里，你通常是……', opts: [
+        { t: '冲在最前面扛压力的那个人', s: { A: 2, C: 1, G: 1 } },
+        { t: '冷静出谋划策的军师', s: { B: -1, E: 1, H: 1 } },
+        { t: '活跃气氛的开心果', s: { C: 2, E: 1, F: 2 } },
+        { t: '少说废话，独立把活干完', s: { A: -2, B: -1 } } ] },
+    { q: '计划突然全乱了，你会？', opts: [
+        { t: '「刺激！」临场发挥反而更强', s: { B: 2, D: -1, F: 1 } },
+        { t: '冷静分析，快速找到新方案', s: { B: -2, D: 1, H: 1 } },
+        { t: '稳住大家别慌，我来顶上', s: { A: 2, C: 1 } },
+        { t: '先截图/拍视频记录一下再说', s: { C: 1, D: -1, F: 1 } } ] },
+    { q: '朋友们一般怎么评价你？', opts: [
+        { t: '永远充满能量的小太阳', s: { C: 2, E: 1, F: 1 } },
+        { t: '靠谱、有担当', s: { A: 2, D: 1, F: -1 } },
+        { t: '深藏不露的高手', s: { C: -2, B: -1 } },
+        { t: '天马行空的鬼才', s: { C: 1, D: -2, H: 1, F: 1 } } ] },
+    { q: '你的动力来自哪里？', opts: [
+        { t: '让身边的人过得更开心', s: { E: 2 } },
+        { t: '变得比昨天的自己更强', s: { E: -2, G: 1 } },
+        { t: '守护重要的人和事物', s: { A: 2 } },
+        { t: '赢！站上最高的领奖台', s: { C: 1, E: -1, G: 1 } } ] },
+    { q: '你的放松方式是？', opts: [
+        { t: '戴上耳机，音乐一响就律动', s: { C: 2, B: 1, F: 1 } },
+        { t: '来一局排位，上分！', s: { C: 1, E: -1, G: 2 } },
+        { t: '冥想发呆，安静地待着', s: { C: -2, B: -1, H: -1 } },
+        { t: '收拾房间整理东西，秩序感拉满', s: { D: 2 } } ] },
+    { q: '面对规则和纪律，你的态度是？', opts: [
+        { t: '规则是底线，说到就要做到', s: { D: 2 } },
+        { t: '规则就是用来突破的', s: { D: -2, B: 1 } },
+        { t: '看心情，灵活变通', s: { D: -1, C: 1, F: 1 } },
+        { t: '先想清楚规则背后的原因', s: { B: -2, H: 1 } } ] },
+    { q: '如果能拥有一种超能力，你选？', opts: [
+        { t: '时间回溯，纠正一切失误', s: { B: -1, D: 1, H: 1 } },
+        { t: '高速移动，帅就完事了', s: { C: 2 } },
+        { t: '治愈他人，拯救生命', s: { E: 2 } },
+        { t: '制造「爆炸性」的惊喜', s: { D: -2, B: 1, F: 1 } } ] },
+    { q: '团队陷入劣势时，你会？', opts: [
+        { t: '大喊「稳住，跟我上」，身先士卒', s: { A: 2, B: 1 } },
+        { t: '「交给我吧！」抓住翻盘的关键点', s: { C: 1, B: -1, H: 1 } },
+        { t: '默默补位支援，一点点扭转战局', s: { E: 2, C: -1 } },
+        { t: '趁乱搞点事情，打乱对方的节奏', s: { D: -2, B: 1, F: 1 } } ] },
+    { q: '你最喜欢哪类 OW 地图的氛围？', opts: [
+        { t: '国王大道/花村的街头巷战', s: { B: 1, D: -1, F: 1 } },
+        { t: '漓江塔/伊利奥斯的好山好水', s: { B: -1, C: -1, H: -1 } },
+        { t: '监测站：直布罗陀/月球基地的科幻感', s: { B: -2, H: 2 } },
+        { t: '艾兴瓦尔德的城堡与荣耀', s: { A: 1, D: 1, H: -1 } } ] },
+    { q: '你的人生大招（高光时刻）是？', opts: [
+        { t: '鼓舞全场，给每个人加上 Buff', s: { E: 2, C: 1, F: 1 } },
+        { t: '一锤定音的裂地猛击', s: { A: 1, C: 1 } },
+        { t: '一针纳米激素，成就队友的巅峰', s: { E: 2, C: -1, F: -1 } },
+        { t: '机甲自爆：「Nerf this!」', s: { C: 2, D: -1, F: 2 } } ] },
+    { q: '组队选英雄时，你的习惯是？', opts: [
+        { t: '缺啥补啥，团队配置第一', s: { E: 2, D: 1 } },
+        { t: '只玩本命，不吃亏也不让位', s: { E: -1, C: 1, G: 1 } },
+        { t: '哪个帅/好玩选哪个', s: { C: 1, D: -1, F: 1 } },
+        { t: '随机英雄，快乐就完事了', s: { D: -2, B: 1, F: 1 } } ] },
+    { q: '你的作息习惯是？', opts: [
+        { t: '早睡早起，自律即自由', s: { D: 2, B: -1 } },
+        { t: '熬夜是常态，夜晚才有效率', s: { D: -1, C: -1, H: 1 } },
+        { t: '睡前必须刷手机到自然困', s: { D: -1, B: 1, F: 1 } },
+        { t: '想睡就睡，跟着感觉走', s: { D: -2, F: 1 } } ] },
+    { q: '你更擅长哪种交流方式？', opts: [
+        { t: '有话直说，当面聊清楚', s: { C: 1, B: 1 } },
+        { t: '打字/发消息，想好再说', s: { C: -1, B: -1, H: 1 } },
+        { t: '表情包和梗图十级学者', s: { C: 2, B: 1, F: 2 } },
+        { t: '倾听为主，一开口就在点子上', s: { E: 1, C: -2, F: -1 } } ] },
+    { q: '遇到压力大的事情，你会？', opts: [
+        { t: '去运动出一身汗', s: { B: 2, G: 1 } },
+        { t: '找朋友倾诉一番', s: { E: 1, C: 1 } },
+        { t: '一个人静静消化', s: { C: -2, A: -1 } },
+        { t: '埋头把事情做完就没事了', s: { B: -1, D: 1, H: 1 } } ] },
+    { q: '你的本命食物是？', opts: [
+        { t: '火锅烧烤，热热闹闹', s: { C: 1, B: 1, F: 1 } },
+        { t: '精致日料/西餐，讲究仪式感', s: { C: -1, D: 1, H: -1 } },
+        { t: '路边摊惊喜，便宜又好吃', s: { D: -1, B: 1, F: 1 } },
+        { t: '健康餐，吃什么都讲究营养', s: { D: 1, B: -1, H: 1 } } ] },
+    { q: '你的学习/工作风格是？', opts: [
+        { t: '列好计划，按部就班', s: { D: 2, B: -1, H: 1 } },
+        { t: '灵感来了爆发一波', s: { D: -2, B: 1, H: -1 } },
+        { t: '跟着节奏，稳扎稳打', s: { D: 1, B: -1 } },
+        { t: '熬夜赶deadline，压线交付', s: { D: -1, B: 1, F: 1 } } ] },
+    { q: '如果去旅行，你选？', opts: [
+        { t: '主题乐园，玩到尽兴', s: { C: 1, B: 1, F: 1 } },
+        { t: '深山古镇，安静看风景', s: { C: -2, B: -1, H: -1 } },
+        { t: '野外探险，挑战自我', s: { B: 1, A: -1, G: 1 } },
+        { t: '说走就走，路上再定', s: { D: -2, B: 1, F: 1 } } ] },
+    { q: '你怎么看待竞争？', opts: [
+        { t: '有竞争才有进步', s: { E: -1, B: 1, G: 2 } },
+        { t: '更喜欢合作共赢', s: { E: 2 } },
+        { t: '无所谓输赢，开心就好', s: { B: 1, D: -1, F: 1 } },
+        { t: '赢要赢得漂亮，有风度', s: { D: 1, A: 1, G: 1 } } ] },
+    { q: '你的审美偏好是？', opts: [
+        { t: '霓虹赛博，未来感', s: { C: 1, B: -1, H: 2 } },
+        { t: '古典优雅，历史厚重', s: { C: -2, A: 1, H: -2 } },
+        { t: '简约实用，功能至上', s: { D: 2, H: 1 } },
+        { t: '大胆撞色，个性张扬', s: { C: 2, D: -1, F: 1 } } ] },
+    { q: '朋友找你倾诉烦恼时，你会？', opts: [
+        { t: '直接给出解决方案', s: { B: -1, A: 1, H: 1 } },
+        { t: '先好好安慰情绪', s: { E: 2 } },
+        { t: '陪TA疯玩一场转移注意力', s: { C: 2, E: 1, F: 2 } },
+        { t: '帮TA理性分析利弊', s: { B: -2, H: 2 } } ] },
+    { q: '你玩游戏的风格是？', opts: [
+        { t: '苦练技术，追求carry全场', s: { E: -2, B: -1, G: 2 } },
+        { t: '团队至上，辅助才是本命', s: { E: 2, A: 1 } },
+        { t: '什么火玩什么，快乐第一', s: { D: -1, B: 1, F: 1 } },
+        { t: '策略流，用脑子赢', s: { B: -2, H: 1, G: 1 } } ] },
+    { q: '你更像是哪种动物？', opts: [
+        { t: '忠诚的大狗，热情可靠', s: { A: 2, B: 1, F: 1 } },
+        { t: '独行的猫，优雅神秘', s: { A: -2, C: -1, G: -1 } },
+        { t: '机灵的狐狸，鬼点子多', s: { C: 1, D: -1, F: 2 } },
+        { t: '自由的鸟，谁也困不住', s: { A: -1, D: -1, F: 1 } } ] },
+    { q: '遇到不公平的事，你会？', opts: [
+        { t: '立刻出头，主持公道', s: { A: 2, D: 1 } },
+        { t: '智取，找到证据再行动', s: { B: -2, H: 2 } },
+        { t: '先保护受伤害的人', s: { A: 1, E: 2 } },
+        { t: '冷眼旁观，心里有数', s: { A: -2, B: -1 } } ] },
+    { q: '你对金钱的态度是？', opts: [
+        { t: '能省则省，存款安心', s: { D: 2, B: -1 } },
+        { t: '该花就花，及时行乐', s: { D: -2, C: 1, F: 1 } },
+        { t: '投资自己，成长最值', s: { E: -2, G: 1 } },
+        { t: '慷慨大方，朋友有难就出手', s: { E: 2, C: 1 } } ] },
+    { q: '约好的朋友临时放你鸽子，你会？', opts: [
+        { t: '有点生气，但转身自己玩得更开心', s: { B: 1, D: -1, F: 1 } },
+        { t: '理解万岁，正好享受独处时光', s: { A: -1, C: -1 } },
+        { t: '先担心TA是不是出了什么事', s: { A: 1, E: 2 } },
+        { t: '直接约好下次时间，说到做到', s: { D: 2, B: -1 } } ] },
+    { q: '你的细节控程度是？', opts: [
+        { t: '细节控，过目不忘', s: { D: 2, B: -1, H: 1 } },
+        { t: '抓大放小，不拘小节', s: { D: -1, B: 1, F: 1 } },
+        { t: '重要的事绝不忘，其他随缘', s: { D: 1, B: 1 } },
+        { t: '转头就忘，快乐就行', s: { D: -2, B: 1, F: 2 } } ] },
+    { q: '理想的团队规模是？', opts: [
+        { t: '三五好友的小圈子', s: { E: 1, C: -1 } },
+        { t: '人越多越热闹', s: { C: 2, E: 1, F: 1 } },
+        { t: '一个人也挺好，独处充电', s: { A: -2, C: -1 } },
+        { t: '因人而异，来者皆友', s: { E: 1, C: 1, F: 1 } } ] },
+    { q: '和朋友产生矛盾时，你会？', opts: [
+        { t: '当面把话说开', s: { C: 1, B: 1 } },
+        { t: '冷静几天再谈', s: { B: -2, C: -1, H: 1 } },
+        { t: '幽默化解，笑着和好', s: { C: 2, E: 1, F: 2 } },
+        { t: '主动道歉先低头', s: { E: 1, C: -1 } } ] },
+    { q: '如果给未来的自己留一句话，你说？', opts: [
+        { t: '「继续变强，别停下」', s: { E: -2, G: 2 } },
+        { t: '「记得多陪陪重要的人」', s: { A: 1, E: 1 } },
+        { t: '「管他呢，快乐就完事」', s: { D: -2, B: 1, F: 2 } },
+        { t: '「你比想象中做得更好」', s: { E: 1, C: -1 } } ] }
+  ];
+
+  var TRAITS = {
+    A: ['守护心强', '独立独行'], B: ['热血冲动', '冷静缜密'], C: ['张扬自信', '谦逊内敛'],
+    D: ['守序自律', '随性自在'], E: ['乐于助人', '专注自我'], F: ['幽默搞怪', '严肃沉稳'],
+    G: ['好胜心强', '淡泊佛系'], H: ['科技脑', '直觉派']
+  };
+  var AXES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+  var maxPossible = {};
+  AXES.forEach(function (a) { maxPossible[a] = 0; });
+  questions.forEach(function (q) {
+    AXES.forEach(function (a) {
+      var m = 0;
+      q.opts.forEach(function (o) { m = Math.max(m, Math.abs(o.s[a] || 0)); });
+      maxPossible[a] += m;
+    });
+  });
+
+  var tiebreaks = [
+    { q: '队友犯错了还甩锅，你会？', opts: [
+        { t: '当面指出来，对事不对人', s: { reinhardt: 3, pharah: 2, 'soldier-76': 2, sojourn: 1 } },
+        { t: '先安慰，事后再私下聊', s: { mercy: 3, brigitte: 2, ana: 2, lifeweaver: 1 } },
+        { t: '先帮TA收拾烂摊子要紧', s: { orisa: 3, winston: 2, baptiste: 2, kiriko: 1 } },
+        { t: '关我啥事，我自己别犯就行', s: { reaper: 3, widowmaker: 2, sombra: 1, hanzo: 1 } } ] },
+    { q: '团队里有人一直状态低迷，你会？', opts: [
+        { t: '拉TA出来一起嗨', s: { lucio: 3, juno: 2, kiriko: 2, dva: 1, mauga: 1 } },
+        { t: '讲道理，帮TA把心结解开', s: { ana: 3, doctrine: 2, winston: 1, zenyatta: 1 } },
+        { t: '默默多帮TA分担一点', s: { mercy: 3, brigitte: 2, lifeweaver: 2, baptiste: 1 } },
+        { t: '尊重TA的空间，等TA自己好起来', s: { zenyatta: 3, moira: 2, wuyang: 1, illari: 1 } } ] },
+    { q: '拿下关键一杀，你会？', opts: [
+        { t: '喊出来/发信号，让全场知道', s: { tracer: 3, dva: 2, junkrat: 2, lucio: 1, mauga: 1 } },
+        { t: '淡淡一笑，继续找下一个目标', s: { widowmaker: 3, ashe: 2, hanzo: 2, sojourn: 1, reaper: 1 } },
+        { t: '第一时间看队友位置，找配合', s: { sombra: 3, echo: 2, genji: 1, cassidy: 1, baptiste: 1 } },
+        { t: '摆个pose，仪式感必须有', s: { venture: 3, 'junker-queen': 2, kiriko: 2, 'wrecking-ball': 1 } } ] },
+    { q: '接到一个全新任务，你的第一反应？', opts: [
+        { t: '先查资料、研究清楚再动手', s: { winston: 3, symmetra: 2, echo: 2, emre: 2, moira: 1 } },
+        { t: '边做边学，做着做着就会了', s: { tracer: 3, venture: 2, junkrat: 1, dva: 1, lucio: 1 } },
+        { t: '找有经验的人请教', s: { brigitte: 3, kiriko: 2, juno: 2, dmon: 1, cassidy: 1 } },
+        { t: '直接上，实践出真知', s: { doomfist: 3, hazard: 2, 'junker-queen': 1, reaper: 1, mauga: 1 } } ] },
+    { q: '你的桌面/房间现状？', opts: [
+        { t: '东西各归其位，看着就舒服', s: { symmetra: 3, 'soldier-76': 2, orisa: 2, sojourn: 1, torbjorn: 1, emre: 1 } },
+        { t: '乱中有序，只有我找得到', s: { sombra: 3, hanzo: 2, echo: 1, moira: 1, sigma: 1, mei: 1 } },
+        { t: '随缘吧，能用就行', s: { roadhog: 3, junkrat: 2, 'wrecking-ball': 2, hazard: 1, lucio: 1, 'jetpack-cat': 1 } },
+        { t: '常整理但常乱', s: { tracer: 3, dva: 2, kiriko: 1, venture: 1, juno: 1 } } ] },
+    { q: '被对手嘲讽了，你会？', opts: [
+        { t: '用实力打脸，下一局见', s: { dva: 3, genji: 2, hanzo: 2, widowmaker: 2, sojourn: 1 } },
+        { t: '嘲回去啊，嘴上不能输', s: { 'junker-queen': 3, mauga: 2, lucio: 2, junkrat: 1, sombra: 1 } },
+        { t: '无视，赢了才是真的', s: { 'soldier-76': 3, ana: 2, winston: 2, mercy: 1, zenyatta: 1 } },
+        { t: '笑一笑，游戏而已', s: { mei: 3, lifeweaver: 2, venture: 2, roadhog: 1, 'wrecking-ball': 1 } } ] },
+    { q: '一直没进展的难题，你会？', opts: [
+        { t: '换个思路，重新建模', s: { winston: 3, moira: 2, symmetra: 2, echo: 1, sigma: 1, emre: 1 } },
+        { t: '死磕到底，不信攻不下来', s: { 'soldier-76': 3, zarya: 2, torbjorn: 2, pharah: 1, sojourn: 1 } },
+        { t: '先放放，灵感会来的', s: { zenyatta: 3, lifeweaver: 2, mei: 2, wuyang: 1, shion: 1 } },
+        { t: '找人一起头脑风暴', s: { lucio: 3, juno: 2, brigitte: 2, baptiste: 1, kiriko: 1 } } ] },
+    { q: '看电影哭了，你会？', opts: [
+        { t: '大大方方承认，好哭就是好哭', s: { mei: 3, mercy: 2, lifeweaver: 2, lucio: 1, juno: 1, mizuki: 1 } },
+        { t: '默默擦掉，别被看见', s: { genji: 3, hanzo: 2, ana: 2, widowmaker: 1, 'soldier-76': 1, reaper: 1 } },
+        { t: '用玩笑带过去', s: { lucio: 3, kiriko: 2, junkrat: 2, dva: 1, sombra: 1, venture: 1 } },
+        { t: '本来就不太会哭', s: { doomfist: 3, ramattra: 2, orisa: 2, sigma: 1, moira: 1, bastion: 1 } } ] }
+  ];
+
+  function imgTag(key, cssClass) {
+    var h = heroes[key];
+    var cls = cssClass ? ' ' + cssClass : '';
+    return '<span class="ow-face' + cls + '" title="' + h.name + '"><span>' + h.emoji + '</span><img src="' + (h.img || MIRRORS[0] + key + '.png') + '" data-key="' + key + '" data-m="0" alt="' + h.name + '" loading="lazy" onerror="window.owFallback(this)"></span>';
+  }
+
+  window.owFallback = function (img) {
+    var key = img.getAttribute('data-key');
+    var h = heroes[key] || {};
+    var sources = [];
+    for (var i = 0; i < MIRRORS.length; i++) sources.push(MIRRORS[i] + key + '.png');
+    var m = parseInt(img.getAttribute('data-m') || '0', 10);
+    if (m + 1 < sources.length) {
+      img.setAttribute('data-m', String(m + 1));
+      img.src = sources[m + 1];
+    } else {
+      img.style.display = 'none';
+    }
+  };
+
+  var idx = 0, user = {}, answers = [];
+  AXES.forEach(function (a) { user[a] = 0; });
+  var mode = 'round1', baseRanked = [], tbQueue = [], tbIdx = 0, tbAnswers = [], bonus = {};
+  var elStart = document.getElementById('ow-start');
+  var elPage = document.getElementById('ow-quiz-page');
+  var elResult = document.getElementById('ow-result');
+
+  function pickTip(seed) {
+    return tips[Math.abs(seed) % tips.length];
+  }
+
+  function show(page) {
+    elStart.hidden = page !== 'start';
+    elPage.hidden = page !== 'quiz';
+    elResult.hidden = page !== 'result';
+  }
+
+  var roster = document.getElementById('ow-roster');
+  roster.innerHTML = Object.keys(heroes).map(function (k) { return imgTag(k); }).join('');
+
+  function renderQuestion() {
+    var pct = Math.round((idx / questions.length) * 100);
+    document.getElementById('ow-progress-label').textContent = '目标 ' + (idx + 1) + ' / ' + questions.length;
+    document.getElementById('ow-charge').textContent = '大招充能 ' + pct + '%';
+    var bar = document.getElementById('ow-progress-bar');
+    bar.style.width = pct + '%';
+    bar.parentElement.setAttribute('aria-valuenow', pct);
+    document.getElementById('ow-question').textContent = questions[idx].q;
+    document.getElementById('ow-tip').textContent = pickTip(idx);
+    document.getElementById('ow-back').hidden = idx === 0;
+    var box = document.getElementById('ow-options');
+    box.innerHTML = '';
+    questions[idx].opts.forEach(function (opt) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'btn btn-block ow-opt';
+      b.textContent = opt.t;
+      b.addEventListener('click', function () { answer(opt.s); });
+      box.appendChild(b);
+    });
+  }
+
+  function recompute() {
+    AXES.forEach(function (a) { user[a] = 0; });
+    for (var i = 0; i < idx && i < answers.length; i++) {
+      var d = answers[i];
+      if (d) Object.keys(d).forEach(function (k) { user[k] += d[k]; });
+    }
+  }
+
+  function answer(deltas) {
+    answers[idx] = deltas;
+    recompute();
+    idx++;
+    if (idx < questions.length) {
+      renderQuestion();
+    } else {
+      startTiebreak();
+    }
+  }
+
+  function goBack(target) {
+    idx = target;
+    recompute();
+    renderQuestion();
+    show('quiz');
+  }
+
+  function distTo(vec) {
+    var d = 0;
+    AXES.forEach(function (a, i) {
+      var u = user[a] / maxPossible[a];
+      var h = vec[i] / 2;
+      d += (u - h) * (u - h);
+    });
+    return d;
+  }
+
+  function startTiebreak() {
+    baseRanked = Object.keys(heroes).map(function (k) {
+      return { key: k, d: distTo(heroes[k].vec) };
+    }).sort(function (x, y) { return x.d - y.d; });
+    var top5 = baseRanked.slice(0, 5).map(function (r) { return r.key; });
+    tbQueue = tiebreaks.map(function (q) {
+      var covered = {};
+      q.opts.forEach(function (o) {
+        Object.keys(o.s).forEach(function (k) { if (top5.indexOf(k) >= 0) covered[k] = 1; });
+      });
+      return { q: q, n: Object.keys(covered).length };
+    }).sort(function (x, y) { return y.n - x.n; }).slice(0, 3).map(function (s) { return s.q; });
+    tbIdx = 0;
+    tbAnswers = [];
+    recomputeBonus();
+    mode = 'tiebreak';
+    renderTiebreak();
+    show('quiz');
+  }
+
+  function recomputeBonus() {
+    bonus = {};
+    for (var i = 0; i < tbIdx && i < tbAnswers.length; i++) {
+      var d = tbAnswers[i];
+      if (d) Object.keys(d).forEach(function (k) { bonus[k] = (bonus[k] || 0) + d[k]; });
+    }
+  }
+
+  function renderTiebreak() {
+    document.getElementById('ow-progress-label').textContent = '决胜局 ' + (tbIdx + 1) + ' / ' + tbQueue.length;
+    document.getElementById('ow-charge').textContent = '大招充能 100%';
+    var bar = document.getElementById('ow-progress-bar');
+    bar.style.width = '100%';
+    bar.parentElement.setAttribute('aria-valuenow', 100);
+    document.getElementById('ow-question').textContent = tbQueue[tbIdx].q;
+    document.getElementById('ow-tip').textContent = '决胜局：根据第一轮结果，从和你最像的几位英雄里挑出最接近的那位。';
+    document.getElementById('ow-back').hidden = tbIdx === 0;
+    var box = document.getElementById('ow-options');
+    box.innerHTML = '';
+    tbQueue[tbIdx].opts.forEach(function (opt) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'btn btn-block ow-opt';
+      b.textContent = opt.t;
+      b.addEventListener('click', function () { answerTb(opt.s); });
+      box.appendChild(b);
+    });
+  }
+
+  function answerTb(deltas) {
+    tbAnswers[tbIdx] = deltas;
+    recomputeBonus();
+    tbIdx++;
+    if (tbIdx < tbQueue.length) {
+      renderTiebreak();
+    } else {
+      renderResult();
+    }
+  }
+
+  function renderResult() {
+    var ranked = baseRanked.map(function (r) {
+      return { key: r.key, d: Math.max(0, r.d - 0.02 * (bonus[r.key] || 0)) };
+    }).sort(function (x, y) { return x.d - y.d; });
+    var top = ranked[0];
+    var tieGroup = ranked.filter(function (r) { return r.d === top.d; });
+    var pick = tieGroup[Math.floor(Math.random() * tieGroup.length)];
+    var hk = pick.key, topHero = heroes[hk];
+
+    document.getElementById('ow-r-emoji').textContent = topHero.emoji;
+    var portrait = document.getElementById('ow-r-portrait');
+    portrait.setAttribute('data-key', hk);
+    portrait.setAttribute('data-m', '0');
+    portrait.onerror = function () { window.owFallback(this); };
+    portrait.src = topHero.img || (MIRRORS[0] + hk + '.png');
+    document.getElementById('ow-r-name').textContent = topHero.name;
+    document.getElementById('ow-r-role').textContent = topHero.role;
+    document.getElementById('ow-r-quote').textContent = topHero.quote;
+    document.getElementById('ow-r-desc').textContent = topHero.desc;
+
+    var scored = AXES.map(function (a) {
+      return { a: a, n: user[a] / maxPossible[a] };
+    }).sort(function (x, y) { return Math.abs(y.n) - Math.abs(x.n); });
+    var labels = [];
+    scored.forEach(function (s) {
+      if (labels.length < 4 && Math.abs(s.n) >= 0.34) {
+        labels.push(s.n > 0 ? TRAITS[s.a][0] : TRAITS[s.a][1]);
+      }
+    });
+    document.getElementById('ow-r-profile').textContent = labels.length
+      ? '你的人格画像：' + labels.join(' · ')
+      : '你的人格画像：各方面相当均衡，像水一样百搭（这可不常见）。';
+
+    var others = ranked.filter(function (r) { return r.key !== hk; }).slice(0, 3);
+    var maxSim = 1 / (1 + pick.d);
+    var matches = document.getElementById('ow-matches');
+    matches.innerHTML = others.map(function (r) {
+      var fit = Math.round(100 * (1 / (1 + r.d)) / maxSim);
+      return '<div class="ow-match">' + imgTag(r.key, 'ow-sm') + '<span>' + heroes[r.key].name + '</span><span class="ow-fit tabular-nums">契合度 ' + fit + '%</span></div>';
+    }).join('');
+
+    document.getElementById('ow-r-tip').textContent = pickTip(hk.length + topHero.name.length);
+    show('result');
+  }
+
+  function begin() {
+    idx = 0;
+    answers = [];
+    recompute();
+    mode = 'round1';
+    tbQueue = [];
+    tbAnswers = [];
+    bonus = {};
+    renderQuestion();
+    show('quiz');
+  }
+
+  document.getElementById('ow-begin').addEventListener('click', begin);
+  document.getElementById('ow-retry').addEventListener('click', begin);
+  document.getElementById('ow-back').addEventListener('click', function () {
+    if (mode === 'tiebreak') {
+      if (tbIdx > 0) { tbIdx--; recomputeBonus(); renderTiebreak(); }
+      else { mode = 'round1'; goBack(questions.length - 1); }
+    } else if (idx > 0) {
+      goBack(idx - 1);
+    }
+  });
+  document.getElementById('ow-back-result').addEventListener('click', function () { goBack(questions.length - 1); });
+})();
+</script>
+</body>
+</html>
